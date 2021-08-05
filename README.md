@@ -164,6 +164,329 @@ call / back : 뒤로 부르다
 
 ---
 
+## this
+
+* 전역공간에서
+    * 전역 객체 , window, global
+    * ![](/images/2021-08-05-10-16-21.png)
+
+* 함수 내부에서
+    * window
+    * 기본적으로 전역객체를 가르킴. 디폴트 : 전역객체
+
+* 메소드 호출시
+    * 메소드 호출한 주체(메소드명 앞)
+    * a.b() -> a객체가 주체
+    * a.b.c() -> a.b객체가 주체
+    * 함수는 전역객체의 메소드라고 생각하면 편하다. 
+    * 내부함수에서의 우회방법 
+        * ![](/images/2021-08-05-10-18-55.png)
+        * c의 주체는 b인데 b가 a가 없으므로 a를 찾아 호출한다.
+        * ![](/images/2021-08-05-10-20-16.png)
+            * 이런식으로 우회해서 스코프를 정할 수 있다.
+
+        
+* callback에서
+    * 기본적으로 함수내부에서와 동일
+    * callback함수에서의 this는 기본적으로 전역객체. 
+    * bind함수를 사용하면 this를 다른 객체로 지정가능 
+    * ## 정리
+        * 제어권을 가진 함수가 callback의 this를 명시한 경우 그에 따른다.
+        * 개발자가 this를 바인딩한 채로 callback을 넘기면 그에 따른다.
+
+## `!! call, apply, bind 메소드에 대하여`
+* ![](/images/2021-08-05-10-22-56.png)
+    * call과 apply의 차이는 두번째부터 쭉 나열해서 매개변수들을 받느냐, 아니면 두번째 인자 하나에 매개변수를 배열로 합쳐서 받느냐 이 차이 
+    * call과 apply는 즉시 호출하지만, bind는 새로운 함수를 생성하지 호출하지는 않는다. 
+   
+ 
+
+* 생성자함수에서
+    * 인스턴스를 가리킴.
+
+
+---
+
+## 클로저
+
+> A closure is the combination of a function and the lexical environment within which that function was declared.
+* lexical environment : 선언 당시의 환경에 대한 정보를 담는 객체(구성 환경)
+* 함수가 그 함수가 선언될 당시의 환경 정보 사이의 조합
+    * 즉 스코프와 관련되있다. 
+
+* ## `함수 내부에서 생성한 데이터와 그 유효범위로 인해 발생하는 특수한 현상/상태`
+    * 클로저란, 이미 생명주기가 끝난 외부함수의 변수를 참조하는 함수 라고도 할 수 있다.
+
+* 클로저 이점
+    * 접근 권한 제어
+
+    * 지역 변수 보호
+
+    * 데이터 보존 및 활용
+
+---
+
+
+## 지역변수 만들기 (클로저로 private member 만들기)
+
+![](/images/2021-08-05-10-42-28.png)
+* 왼쪽의 안전하지 않은 객체를 오른쪽 방법으로 안전하게 수정.
+    * 바뀐 코드를 잘 보자. return 하고 안하고 차이가 있따.
+
+
+* 클로저를 이용해서 private 멤버와 public 멤버를 구분하는 방법
+    1. 함수에서 지역변수 및 내부함수 등을 생성한다.
+    2. 외부에 노출시키고자 하는 멤버들로 구성된 객체를 return한다.
+        * return한 객체에 포함되지 않은 멤버들은 private 하다.
+        * return한 객체에 포함된 멤버들은 pubiic 하다.
+
+---
+
+## prototype과 constructor, __prote__
+
+* ![](/images/2021-08-05-10-53-11.png)
+* 생성자를 new 키워드를 이용하여 인스턴스를 생성하면, 생성자의 prototype 프로퍼티가 인스턴스의 __proto__로 전달이 된다.
+    * 즉 생성자 함수의 prototyper과 인스턴스의 __proto__는 같은 객체를 `참조` 한다.
+* __proto__는 생략이 가능하다.
+
+* ![](/images/2021-08-05-10-58-48.png)
+
+---
+
+## 메소드 상속 및 동작 원리
+
+```javascript
+function Person(n, a) {
+    this.name = n;
+    this.age = a;
+}
+
+Person.prototype.setOlder = function() {
+    this.age += 1;
+}
+
+Person.prototype.getAge = function() {
+    return this.age;
+}
+
+var gomu = new Person('고무곰', 30);
+var iu = new Person('아이유', 25);
+
+iu.__proto__.setOlder(); // 이러면 NaN이 출력된다. 메서드들의 this가 iu가 아닌 iu.__proto__이기 때문
+
+
+// 그러나 __proto__는 생략이 가능하다
+iu.setOlder(); // 이러면 this가 iu를 가리키기 때문에 사용이 가능하다. 
+
+```
+
+---
+
+## prototype static 메소드 및 static 프로퍼티
+
+![](/images/2021-08-05-11-48-46.png)
+
+![](/images/2021-08-05-11-56-48.png)
+* 인스턴스에서는 prototype method에는 다이렉트로 접근 가능하지만, 생성자 함수 내부에 있는 스태틱 메소드나 프로퍼티는 접근이 불가하다.
+
+```javascript
+function Person(name, age) {
+    this._name = name;
+    this._age = age;
+}
+
+// static method
+Person.getInformations = function(instance) {
+    return {
+        name : instance._name,
+        age : instance._age
+    };
+}
+
+
+// (prototype) method
+Person.prototype.getName = function() {
+    return this._name;
+}
+
+// (prototype) method
+Person.prototype.getAge = function() {
+    return this._age;
+}
+
+```
+
+![](/images/2021-08-05-12-01-13.png)
+
+
+
+
+### class 상속 구현
+
+![](/images/2021-08-05-12-04-06.png)
+
+* Employee 클래스가 Person 클래스를 상속 받으려면?
+
+* ![](/images/2021-08-05-12-05-58.png)
+    * 하위 클래스의 프로토타입을 상위 클래스로 인스턴스화 한다. 
+    * 하위 클래스의 프로토타입의 컨스트럭터를 하위클래스로 
+
+```javascript
+
+function Person(name, age) {
+    this.name = name || '이름없음';
+    this.age = age || '나이모름';
+}
+
+Person.prototype.getName = function() {
+    return this.name;
+}
+
+Person.prototype.getAge = function() {
+    return this.age;
+}
+
+function Employee(name, age, position) {
+    this.name = name || '이름없음';
+    this.age = age || '나이모름';
+    this.position = position || '직책모름';    
+}
+
+Employee.prototype = new Person();
+Employee.prototype.constructor = Employee;
+Employee.prototype.getPosition = function() {
+    return this.position;
+}
+
+```
+
+* 그러나 속성을 뜯어보면 다음과 같은 문제가 발생한다.
+
+* ![](/images/2021-08-05-12-14-59.png)
+    * gomu.__proto__ 와 같은 속성에 age 와 name같은 속성(프로퍼티)가 있는것이 마땅하지 않다.
+    * 불필요한 프로퍼티들을 제거해야 한다.
+
+* 반드시 Person(상위클래스)의 인스턴스가 필요한 것이 아니다. 
+    * `Person(상위클래스).prototype을 상속받는 별도의 인스턴스가 있고, 그 객체에는 아무런 프로퍼티가 존재하지 않게 하면 된다.`
+
+* 이런 방식으로 해결
+    * ![](/images/2021-08-05-12-20-55.png)
+
+
+```javascript
+
+function Person(name, age) {
+    this.name = name || '이름없음';
+    this.age = age || '나이모름';
+}
+
+Person.prototype.getName = function() {
+    return this.name;
+}
+
+Person.prototype.getAge = function() {
+    return this.age;
+}
+
+function Employee(name, age, position) {
+    this.name = name || '이름없음';
+    this.age = age || '나이모름';
+    this.position = position || '직책모름';    
+}
+
+function Bridge() {}
+
+Bridge.prototype = Person.prototype; // 이부분 변경 
+
+Employee.prototype = new Bridge(); // 이부분 변경
+Employee.prototype.constructor = Employee;
+
+Employee.prototype.getPosition = function() {
+    return this.position;
+}
+
+
+// 이런식으로 함수화해서 사용도 가능하다!!!
+// 클로저 함수를 이용한것 
+var extendClass = (function() {
+    function Bridge(){}
+
+    return function(Parent, Child) {
+        Bridge.prototype = Parent.prototype;
+        Child.prototype = new Bridge();
+        Child.prototype.constructor = Child;
+    }
+});
+
+
+// 다음과 같이 name, age 프로퍼티를 구현할 수도 있다.
+
+function Person(name, age) {
+    this.name = name || '이름없음';
+    this.age = age || '나이모름';
+}
+
+function Employee(name, age, position) {
+    this.superClass(name, age);
+    this.position = position || '직책 모름';
+}
+
+
+var extendClass = (function() {
+    function Bridge(){}
+
+    return function(Parent, Child) {
+        Bridge.prototype = Parent.prototype;
+        Child.prototype = new Bridge();
+        Child.prototype.constructor = Child;
+        Child.prototype.superClass = Parent;
+   }
+});
+
+extendClass(Person, Employee);
+
+
+
+
+```
+
+* `## 그러나 es6에서는 내장 명령어만으로 다음과 같이 쉽게 구현할 수 있다.`
+
+```javascript
+
+class Person {
+    constructor(name, age) {
+        this.name = name || '이름없음';
+        this.age = age || '나이모름';
+    }
+
+    getName() {
+        return this.name;
+    }
+
+    getAge() {
+        return this.age;
+    }
+
+}
+
+class Employee extends Person {
+    constructor(name, age, position) {
+        super(name, age);
+        this.position = position || '직책모름';
+    }
+
+    getPosition() {
+        return this.position;
+    }
+}
+
+
+```
+
+* 참조형 데이터가 어떤식으로 변수를 저장하는지, 알 수 있따. 
+
+
 ---
 ## 데이터타입
 
